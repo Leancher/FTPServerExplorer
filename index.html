@@ -40,34 +40,33 @@
             var ftpPath = "ftp:///192.168.0.127//";
 
             async function getDirsList(dir) {
+                //Стираем содержимое перед обновлением
                 document.getElementById("main").innerHTML = "";
 
                 // отправляет запрос и получаем ответ
                 const response = await fetch("/", {
-                    method: "POST",
+                    method: "POST", //Метод для отпавки данных
                     headers: { "Accept": "application/json", "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        Name: dir
+                        Name: dir, //Записываем данные
+                        test: "test"
                     })
                 });
-                // если запрос прошел нормально
+                // Если запрос прошел нормально
                 if (response.ok === true) {
-                    // получаем данные
-                    const dirs = await response.json();
-                    dirs.forEach((dirName, index) => {
+                    // Получаем данные
+                    const responseData = await response.json();
+                    responseData.forEach((dirName, index) => {
                         const button = document.createElement("button");
                         button.innerText = dirName;
                         button.id = dirName;
-                        button.tabIndex = index;
                         button.className = "button";
                         button.addEventListener("click", async () => await getDirsList(dirName));
                         document.getElementById("main").appendChild(button);
                     });
-                }
-                else {
-
-                }
+                };
             };
+            //При первом открытии страницы запрашиваем корневую папку
             getDirsList("root");
             document.getElementById("btBack").addEventListener("click", async () => await getDirsList("back"));
         </script>
