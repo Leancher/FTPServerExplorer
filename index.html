@@ -35,17 +35,16 @@
             <button id="btBack">Назад</button>
         </div>
     </div>
-
         <script>
             var ftpPath = "ftp:///192.168.0.127//";
-
+            const imagePic = "Cover 00.jpg";
             async function getDirsList(dir) {
                 //Стираем содержимое перед обновлением
                 document.getElementById("main").innerHTML = "";
 
                 // отправляет запрос и получаем ответ
                 const response = await fetch("/", {
-                    method: "POST", //Метод для отпавки данных
+                    method: "POST", //Метод для отправки данных
                     headers: { "Accept": "application/json", "Content-Type": "application/json" },
                     body: JSON.stringify({
                         Name: dir, //Записываем данные
@@ -56,16 +55,37 @@
                 if (response.ok === true) {
                     // Получаем данные
                     const responseData = await response.json();
-                    responseData.forEach((dirName, index) => {
-                        const button = document.createElement("button");
-                        button.innerText = dirName;
-                        button.id = dirName;
-                        button.className = "button";
-                        button.addEventListener("click", async () => await getDirsList(dirName));
-                        document.getElementById("main").appendChild(button);
-                    });
+                    var isImageDir = responseData[responseData.length - 2];
+                    console.log(isImageDir);
+                    responseData.pop();
+                    responseData.pop();
+                    if (parseInt(isImageDir)) {
+                        await showDiskImages(responseData);
+                    }
+                    else {
+                        await showDirs(responseData);
+                    }
                 };
             };
+            async function showDirs(responseData) {
+                responseData.forEach((dirName, index) => {
+                    const button = document.createElement("button");
+                    button.innerText = dirName;
+                    button.id = dirName;
+                    button.className = "button";
+                    button.addEventListener("click", async () => await getDirsList(dirName));
+                    document.getElementById("main").appendChild(button);
+                });
+            }
+            async function showDiskImages(responseData) {
+                responseData.forEach((dirName, index) => {
+                    const cell = document.createElement("div");
+                    const img = document.createElement("img");
+                    img.src = "http://localhost:5101/TestDir/Data" + "\\" + "Телефонный справочник 2004" + "\\" + imagePic;
+                    cell.appendChild(img);
+                    document.getElementById("main").appendChild(cell);
+                });
+            }
             //При первом открытии страницы запрашиваем корневую папку
             getDirsList("root");
             document.getElementById("btBack").addEventListener("click", async () => await getDirsList("back"));

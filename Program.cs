@@ -1,20 +1,26 @@
+using MyFTPserverExplorer;
 using System.Text.Json;
-
+using Microsoft.Extensions.FileProviders;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Добавляем сервисы CORS
 builder.Services.AddCors(); 
 
 var app = builder.Build();
 
-List<string> responseData = new List<string>();
+List<string> responseData = [];
 string responseStr = "";
-Props appProps = new();
-string initFile = Environment.CurrentDirectory + "\\setup.ini";
+AppProps appProps = new();
+string initFile = Path.Combine(Environment.CurrentDirectory, "Config.ini");
 await ReadInitFile();
-string curDir = appProps.rootDir;
+string curDir = appProps.RootDir;
 
 // Настраиваем CORS. Можно использовать все методы, заголовки, источники.
 app.UseCors(builder => builder.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(appProps.RootDir), // Используем физический файловый провайдер
+});
 
 app.Run(async (context) =>
 {
@@ -31,7 +37,9 @@ async Task getResponse(HttpRequest request, HttpResponse response)
     //Получаем в виде строки, затем преобразоваем в JSON
     using StreamReader reader = new(request.Body);
     string bodyAsString = await reader.ReadToEndAsync();
-    Dir? dir = new(); 
+    Dir? dir = new();
+    string host = request.Host.ToString();
+    string path = request.Path.ToString();
     if (bodyAsString == "")
     {
         //Если данных нет, значит нужна корневая папка
@@ -54,7 +62,7 @@ async Task handleResponse(string selectedDir, HttpResponse response)
     {
         //Происходит при первом запуске, отправляем страницу
         case "/":
-            response.ContentType = "text/html; charset=utf-8";
+            response.ContentType = "text/html";
             await response.SendFileAsync("index.html");
             break;
         //После отправки страницы, она запрашивает корневую папку
@@ -69,7 +77,7 @@ async Task handleResponse(string selectedDir, HttpResponse response)
             break;
         //Во всех остальных случаях получаем название выбранной папки
         default:
-            curDir = string.Concat(curDir, "/", selectedDir);
+            curDir = Path.Combine(curDir, selectedDir);
             await sendResponse(response, curDir);
             break;
     }
@@ -78,12 +86,14 @@ async Task handleResponse(string selectedDir, HttpResponse response)
 async Task sendResponse(HttpResponse response, string path)
 {
     responseData = new List<string>();
-    await addDirsListToResponse(path);
+    addDirsListToResponse(path);
     //await addParamsToResponse(path);
     await response.WriteAsJsonAsync(responseData);
 };
 
-async Task addDirsListToResponse(string path)
+//Составляем массив с папками, в конце добавляем кол-во папок и
+//тип данных: тображать как список папок или как список картинок дисков
+void addDirsListToResponse(string path)
 {
     var dir = new DirectoryInfo(path + "\\");
     DirectoryInfo[] dirs = dir.GetDirectories();
@@ -91,19 +101,19 @@ async Task addDirsListToResponse(string path)
     {
         responseData.Add(dirs[n].Name);
     }
+    responseData.Add(checkImageDir(path).ToString() ?? "0");
+    responseData.Add(dirs.Length.ToString());
     responseStr = JsonSerializer.Serialize(responseData);
 }
 
-async Task addParamsToResponse(string path)
+void addParamsToResponse(string path)
 {
-    //Элемент 1 - тип данных. Отображать как список папок или как список картинок дисков
-    responseData.Add(checkImageDir(path).Result.ToString() ?? "0");
-    responseStr = JsonSerializer.Serialize<Props>(appProps);
+    responseStr = JsonSerializer.Serialize<AppProps>(appProps);
 }
 
 async Task ReadInitFile()
 {
-    using (StreamReader reader = new StreamReader(initFile))
+    using (StreamReader reader = new(initFile))
     {
         string? propsStr="";
         string? line;
@@ -113,37 +123,14 @@ async Task ReadInitFile()
         }
         propsStr = propsStr.TrimEnd([',']);
         propsStr = string.Concat("{",propsStr,"}");       
-        appProps = JsonSerializer.Deserialize<Props>(propsStr);
+        appProps = JsonSerializer.Deserialize<AppProps>(propsStr);
     };
     
 }
 
-async Task<int> checkImageDir(string path)
+int checkImageDir(string path)
 {
-    FileInfo file = new FileInfo(path + "\\" + appProps.imageDirFile);
+    FileInfo file = new(Path.Combine(path, appProps.ImageDirFile));
     if (file.Exists) return 1;
     return 0;
-}
-
-public class Props
-{
-    public string rootDir { get; set; } = "";
-    public string picDir { get; set; } = "";
-    public string imageDirFile { get; set; } = "";
-    public string imagePic { get; set; } = "";
-    public Props() { }
-    public Props(string rootDir, string picDir, string imageDirFile, string imagePic) { 
-        this.rootDir = rootDir;
-        this.picDir = picDir;
-        this.imageDirFile = imageDirFile;
-        this.imagePic = imagePic;
-    }
-}
-
-public class Dir
-{
-    public string Name { get; set; } = "";
-    public string Test { get; set; } = "";
-    public Dir() { }
-    public Dir (string name, string test) {  Name = name; Test = test; }
 }
