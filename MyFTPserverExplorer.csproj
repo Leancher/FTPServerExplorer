@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Config.ini" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -22,19 +26,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="favicon.png">
+    <None Update="Config.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Config.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
+    <None Include="wwwroot\images\favicon.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

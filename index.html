@@ -1,31 +1,10 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="stylesheet.css">
+    <link type="image/png" sizes="16x16" rel="icon" href="images/favicon.png">
     <meta charset="utf-8" />
     <title>My FTP-server</title>
-    <link type="image/png" sizes="16x16" rel="icon" href="favicon.png">
-    <style>
-        .flex-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .flex-item {
-            text-align: center;
-            font-size: 1.1em;
-            /*border: 2px solid #ccc;*/
-            padding: 1.5em;
-            width: 50%;
-        }
-        .button{
-            width: 300px;
-            margin-top: 1px;
-            margin-bottom: 1px;
-            margin-left: 1px;
-            margin-right: 1px;
-        }
-    </style>
 </head>
 <body>
     <div class="flex-container">
@@ -35,60 +14,6 @@
             <button id="btBack">Назад</button>
         </div>
     </div>
-        <script>
-            var ftpPath = "ftp:///192.168.0.127//";
-            const imagePic = "Cover 00.jpg";
-            async function getDirsList(dir) {
-                //Стираем содержимое перед обновлением
-                document.getElementById("main").innerHTML = "";
-
-                // отправляет запрос и получаем ответ
-                const response = await fetch("/", {
-                    method: "POST", //Метод для отправки данных
-                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        Name: dir, //Записываем данные
-                        test: "test"
-                    })
-                });
-                // Если запрос прошел нормально
-                if (response.ok === true) {
-                    // Получаем данные
-                    const responseData = await response.json();
-                    var isImageDir = responseData[responseData.length - 2];
-                    console.log(isImageDir);
-                    responseData.pop();
-                    responseData.pop();
-                    if (parseInt(isImageDir)) {
-                        await showDiskImages(responseData);
-                    }
-                    else {
-                        await showDirs(responseData);
-                    }
-                };
-            };
-            async function showDirs(responseData) {
-                responseData.forEach((dirName, index) => {
-                    const button = document.createElement("button");
-                    button.innerText = dirName;
-                    button.id = dirName;
-                    button.className = "button";
-                    button.addEventListener("click", async () => await getDirsList(dirName));
-                    document.getElementById("main").appendChild(button);
-                });
-            }
-            async function showDiskImages(responseData) {
-                responseData.forEach((dirName, index) => {
-                    const cell = document.createElement("div");
-                    const img = document.createElement("img");
-                    img.src = "http://localhost:5101/TestDir/Data" + "\\" + "Телефонный справочник 2004" + "\\" + imagePic;
-                    cell.appendChild(img);
-                    document.getElementById("main").appendChild(cell);
-                });
-            }
-            //При первом открытии страницы запрашиваем корневую папку
-            getDirsList("root");
-            document.getElementById("btBack").addEventListener("click", async () => await getDirsList("back"));
-        </script>
+    <script src="Program.js"></script>
 </body>
 </html>

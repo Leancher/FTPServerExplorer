@@ -1,0 +1,23 @@
+﻿.flex-container
+
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flex-item {
+    text-align: center;
+    font-size: 1.1em;
+    /*border: 2px solid #ccc;*/
+    padding: 1.5em;
+    width: 50%;
+}
+
+.button {
+    width: 300px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    margin-left: 1px;
+    margin-right: 1px;
+}
