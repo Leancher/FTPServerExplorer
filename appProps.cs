@@ -10,8 +10,14 @@
         public string DiskImagePic { get; set; } = "";
         //Дальше папка с образами дисков или нет: 1 или 0
         public string IsImageDir { get; set; } = "";
+        //Адрес сайта
         public string WebHost { get; set; } = "";
+        //Адрес ФТП-сервера
         public string FTPHost { get; set; } = "";
+        //Корневая папка с дисками
+        public string FileHost { get; set; } = "";
+        //Путь к папке с чертой "/"
+        public string URL { get; set; } = "";
         public AppProps() { }
         public AppProps(string curDirPath, string imageDirFile, string diskImagePic, string isImageDir)
         {
@@ -26,7 +32,13 @@
     {
         public string DirName { get; set; } = "";
         public string Command { get; set; } = "";
+        public string Direction { get; set; } = "";
         public ResponseData() { }
-        public ResponseData(string dirName, string command) { DirName = dirName; Command = command; }
+        public ResponseData(string dirName, string command, string direction) 
+        {
+            DirName = dirName;
+            Command = command;
+            Direction = direction;
+        }
     }
 }

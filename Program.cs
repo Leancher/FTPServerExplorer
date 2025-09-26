@@ -8,17 +8,16 @@ builder.Services.AddCors();
 var app = builder.Build();
 
 AppProps appProps = new();
+ResponseData responseData = new();
 
 await init();
-//Путь к родительской папке, список папок которой будет передаваться
-string curDirPath = appProps.CurDirPath;
 
 //Устанавливаем папки для получения файлов на странице
 //Папка wwwroot
 var webRootProvider = new PhysicalFileProvider(builder.Environment.WebRootPath);
 //Своя папка
 var newPathProvider = new PhysicalFileProvider(
-    Path.Combine(builder.Environment.ContentRootPath, appProps.CurDirPath));
+    Path.Combine(builder.Environment.ContentRootPath, appProps.FileHost));
 var compositeProvider = new CompositeFileProvider(webRootProvider, newPathProvider);
 app.Environment.WebRootFileProvider = compositeProvider;
 app.UseStaticFiles();
@@ -42,81 +41,73 @@ async Task getResponse(HttpRequest request, HttpResponse response)
     //Получаем в виде строки, затем преобразоваем в JSON
     using StreamReader reader = new(request.Body);
     string bodyAsString = await reader.ReadToEndAsync();
-    ResponseData? data = new();
+    
     if (bodyAsString == "")
     {
         //Если данных нет, значит нужна корневая папка
-        await handleResponse("/", "init", response);
+        responseData.DirName = "\\";
+        responseData.Command = "init";
+        responseData.Direction = "";
     }
     else
     {
         //Если данные есть, извлекаем из JSON.
-        //Оператор ?? возвращает левый операнд, если этот операнд не равен null.
-        //Иначе возвращается правый операнд. При этом левый операнд должен принимать null.
-        data = JsonSerializer.Deserialize<ResponseData>(bodyAsString ?? "/");
-        //? - если dir не равен null, то происходит обращение к его свойству Name
-        await handleResponse(data?.DirName ?? "/", data?.Command ?? "/", response);
+        responseData = JsonSerializer.Deserialize<ResponseData>(bodyAsString);      
     }
+    await handleResponseCommand(response);
 }
 //Обработка полученной команды
-async Task handleResponse(string selectedDir, string command, HttpResponse response)
+async Task handleResponseCommand(HttpResponse response)
 {
-    switch (command)
+    switch (responseData.Command)
     {
         //Происходит при первом запуске, отправляем страницу
         case "init":
             response.ContentType = "text/html";
             await response.SendFileAsync("index.html");
             break;
-        //После отправки страницы, она запрашивает корневую папку
-        case "root":
-            await sendDirsLsit(response, curDirPath);
-            break;
-        //При нажатии кнопки Назад
-        case "back":
-            var len = curDirPath.LastIndexOf('/');
-            if (len != -1) curDirPath = curDirPath.Substring(0, len);
-            await sendDirsLsit(response, curDirPath);
-            break;
         case "props":
-            await sendProps(response, curDirPath);
+            await sendProps(response);
             break;
-
         //Во всех остальных случаях получаем название выбранной папки
         default:
-            curDirPath = Path.Combine(curDirPath, selectedDir);
-            await sendDirsLsit(response, curDirPath);
+            await sendDirsLsit(response);
             break;
     }
 }
 
 //Составляем массив с папками, в конце добавляем кол-во папок и
 //тип данных: отображать как список папок или как список картинок дисков
-async Task sendDirsLsit(HttpResponse response, string path)
+async Task sendDirsLsit(HttpResponse response)
 {
     List<string> responseData = [];
-    var dir = new DirectoryInfo(path + "\\");
+    var dir = new DirectoryInfo(appProps.FileHost + appProps.CurDirPath);
     DirectoryInfo[] dirs = dir.GetDirectories();
     for (int n = 0; n < dirs.Length; n++)
     {
         responseData.Add(dirs[n].Name);
     }
-    //responseStr = JsonSerializer.Serialize(responseData);
     await response.WriteAsJsonAsync(responseData);
 }
 
-async Task sendProps(HttpResponse response, string curDirPath)
+async Task sendProps(HttpResponse response)
 {
     //Список настроек:
     //Путь к текущей папке
+    //Путь к папке с обратной /
     //Имя файла с картинкой диска
     //Адрес сайта
     //Адрес ФТП-севера
-    checkImageDir(curDirPath);
-    //Удаляем имя диска
-    int num = curDirPath.IndexOf('\\');
-    if (num != -1) curDirPath = curDirPath.Substring(num + 1);
-    appProps.CurDirPath = curDirPath;
+
+    if (responseData.Direction == "nextDir") appProps.CurDirPath = Path.Combine(appProps.CurDirPath, responseData.DirName);
+    if (responseData.Direction == "prevDir")
+    {
+        var len = appProps.CurDirPath.LastIndexOf('\\');
+        if (len != -1) appProps.CurDirPath = appProps.CurDirPath.Substring(0, len);
+        if (appProps.CurDirPath=="") appProps.CurDirPath = "\\";
+    }
+    appProps.URL = appProps.CurDirPath.Replace('\\', '/');
+    checkImageDir(appProps.CurDirPath);
     string responseStr = JsonSerializer.Serialize<AppProps>(appProps);
     await response.WriteAsJsonAsync(responseStr);
 }
@@ -140,7 +131,7 @@ async Task init()
 
 void checkImageDir(string path)
 {
-    FileInfo file = new(Path.Combine(path, appProps.ImageDirFile));
+    FileInfo file = new(string.Concat(appProps.FileHost, path, "/", appProps.ImageDirFile));
     appProps.IsImageDir = "0";
     if (file.Exists) appProps.IsImageDir = "1";
 }

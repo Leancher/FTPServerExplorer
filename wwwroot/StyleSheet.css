@@ -1,6 +1,4 @@
-﻿.flex-container
-
-{
+﻿.flex-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,4 +18,16 @@
     margin-bottom: 1px;
     margin-left: 1px;
     margin-right: 1px;
+}
+.cell-disk {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.cell-disk-content {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    margin-left: 10px;
+    margin-right: 1px;
+    text-align: left;
 }
