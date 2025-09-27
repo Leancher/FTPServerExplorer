@@ -37,6 +37,8 @@ app.Run();
 async Task getResponse(HttpRequest request, HttpResponse response)
 {
     appProps.WebHost = string.Concat("http://", request.Host.ToString());
+    Console.WriteLine("Port: " + request.Host.Port.ToString());
+    Console.WriteLine("Host: " + request.Host.ToString());
     //ѕри запросе с клиента данные записываютс€ в Body
     //ѕолучаем в виде строки, затем преобразоваем в JSON
     using StreamReader reader = new(request.Body);

@@ -10,10 +10,12 @@ var appProps = {
     diskImagePic: "Cover 00.jpg",
     isImageDir: "0",
     webhost: "",
-    ftpHost: "ftp:///192.168.0.127//",
+    ftpHost: "",
     nextDir: "nextDir",
     prevDir: "prevDir"
 }
+
+
 
 //Имя выбранной папки, направление: показ следующей папки или предыдущей
 async function getResponse(dirName, direction) {
@@ -87,11 +89,18 @@ async function showDiskImages(responseData) {
         imgContent.className = "cell-disk-content";
 
         const img = document.createElement("img");
-        img.onload = function () { console.log("img.onload ok"); };           
+
+
+        img.src = appProps.webhost + appProps.url + "/" + dirName + "/" + appProps.diskImagePic;
+        img.onload = function () {
+            console.log("img.onload ok");
+        };           
         img.onerror = function () {
+            console.log("img src: " + img.src);
             img.src = appProps.webhost + "/images/" + appProps.diskImagePic;
         };
-        img.src = appProps.webhost + appProps.url + "/" + dirName + "/" + appProps.diskImagePic;
+
+
         imgContent.appendChild(img);
 
         const textContent = document.createElement("div");
@@ -100,11 +109,14 @@ async function showDiskImages(responseData) {
         const name = document.createTextNode(dirName);
         textContent.appendChild(name);
         textContent.appendChild(document.createElement("br"));
-        const link = document.createElement("a");
-        //link.href = "ftp://195.46.162.215//Images//Education//Litra_ru//"
-        link.href = appProps.ftpHost + appProps.url + "/" + dirName;
-        link.text="Открыть папку в прводнике"
-        textContent.appendChild(link);
+        textContent.appendChild(document.createElement("br"));
+
+        const ftpURL = appProps.ftpHost + appProps.url + "/" +  dirName;
+        const ftpButton = document.createElement("button");
+        ftpButton.innerText = "Открыть папку FTP-сервера";
+        ftpButton.addEventListener("click", () => window.open(ftpURL, "_blank"));
+
+        textContent.appendChild(ftpButton);
 
         cell.appendChild(imgContent);
         cell.appendChild(textContent);
